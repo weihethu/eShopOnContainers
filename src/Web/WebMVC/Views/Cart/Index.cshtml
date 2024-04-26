@@ -15,5 +15,40 @@
         <partial name="_Header" model="headerList"/>
 
         @await Component.InvokeAsync("CartList", new { user = UserManager.Parse(User) })
+
+        <div class="esh-basket-coupon">
+            <label for="couponCode">Coupon Code:</label>
+            <input type="text" id="couponCode" name="couponCode" placeholder="Enter coupon code" />
+            <button type="button" onclick="applyCoupon()">Apply</button>
+        </div>
     </div>
 </form>
+
+@section Scripts {
+    <script>
+        function applyCoupon() {
+            var couponCode = document.getElementById('couponCode').value;
+            var items = []; // This should be populated with the actual cart items
+            fetch('@Url.Action("ApplyCoupon", "Cart")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ couponCode: couponCode, items: items })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the cart display with the new prices
+                } else {
+                    // Display an error message
+                    alert('Coupon application failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error applying coupon:', error);
+            });
+        }
+    </script>
+}

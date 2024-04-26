@@ -6,12 +6,14 @@ public class CartController : Controller
     private readonly IBasketService _basketSvc;
     private readonly ICatalogService _catalogSvc;
     private readonly IIdentityParser<ApplicationUser> _appUserParser;
+    private readonly IHttpClientFactory _clientFactory;
 
-    public CartController(IBasketService basketSvc, ICatalogService catalogSvc, IIdentityParser<ApplicationUser> appUserParser)
+    public CartController(IBasketService basketSvc, ICatalogService catalogSvc, IIdentityParser<ApplicationUser> appUserParser, IHttpClientFactory clientFactory)
     {
         _basketSvc = basketSvc;
         _catalogSvc = catalogSvc;
         _appUserParser = appUserParser;
+        _clientFactory = clientFactory;
     }
 
     public async Task<IActionResult> Index()
@@ -31,7 +33,6 @@ public class CartController : Controller
         return View();
     }
 
-
     [HttpPost]
     public async Task<IActionResult> Index(Dictionary<string, int> quantities, string action)
     {
@@ -50,6 +51,36 @@ public class CartController : Controller
         }
 
         return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ApplyCoupon(string couponCode, List<Item> items)
+    {
+        try
+        {
+            var user = _appUserParser.Parse(HttpContext.User);
+            var client = _clientFactory.CreateClient();
+            var couponApplicationResult = await client.PostAsJsonAsync("http://localhost:5000/apply-coupon", new { couponCode, items });
+            couponApplicationResult.EnsureSuccessStatusCode();
+            var result = await couponApplicationResult.Content.ReadAsAsync<CouponApplicationResult>();
+
+            if (result.Success)
+            {
+                // Update the basket with the new prices
+                await _basketSvc.UpdateBasket(user, result.UpdatedItems);
+            }
+            else
+            {
+                // Handle the error message accordingly
+                ModelState.AddModelError("", $"Coupon application failed: {result.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex);
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> AddToCart(CatalogItem productDetails)
@@ -76,4 +107,18 @@ public class CartController : Controller
     {
         ViewBag.BasketInoperativeMsg = $"Basket Service is inoperative {ex.GetType().Name} - {ex.Message}";
     }
+}
+
+public class Item
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
+
+public class CouponApplicationResult
+{
+    public bool Success { get; set; }
+    public string Message { get; set; }
+    public List<Item> UpdatedItems { get; set; }
 }
