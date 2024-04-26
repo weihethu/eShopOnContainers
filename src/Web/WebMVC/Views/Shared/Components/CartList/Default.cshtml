@@ -5,13 +5,16 @@ function applyCoupon() {
         return;
     }
 
-    // Placeholder URL for the coupon management service
-    var couponServiceUrl = 'http://localhost:5000/apply-coupon';
+    // Retrieve cart items from the local storage or a relevant DOM element
+    var cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+
+    // Updated URL for the coupon management service
+    var couponServiceUrl = 'https://60337cfa81b8.ngrok.app/apply-coupon';
 
     // Data to be sent to the coupon management service
     var data = {
         coupon_code: couponCode,
-        items: [] // This will need to be populated with the actual items in the cart
+        items: cartItems // Populated with the actual items in the cart
     };
 
     // Fetch API to call the coupon management service
@@ -28,6 +31,7 @@ function applyCoupon() {
             // Update the cart prices based on the response
             // This will need to be implemented to update the UI accordingly
             console.log('Coupon applied:', data);
+            updateCartPrices(data.updatedPrices);
         } else {
             // Handle any errors or messages returned from the coupon management service
             alert('Error applying coupon: ' + data.message);
@@ -38,4 +42,21 @@ function applyCoupon() {
         alert('An error occurred while applying the coupon.');
     });
 }
+
+function updateCartPrices(updatedPrices) {
+    // Assuming 'updatedPrices' is an array of objects with 'id' and 'newPrice'
+    updatedPrices.forEach(item => {
+        var priceElement = document.getElementById('price-' + item.id);
+        if (priceElement) {
+            priceElement.textContent = item.newPrice.toFixed(2);
+        }
+    });
+}
+
+// Example structure of 'updatedPrices':
+// [
+//     { id: 'item1', newPrice: 8.99 },
+//     { id: 'item2', newPrice: 15.49 },
+//     ...
+// ]
 </script>
