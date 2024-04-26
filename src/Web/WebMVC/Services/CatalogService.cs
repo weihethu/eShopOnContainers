@@ -2,19 +2,19 @@
 
 public class CatalogService : ICatalogService
 {
-    private readonly IOptions<AppSettings> _settings;
+    private readonly IOptionsSnapshot<AppSettings> _settings;
     private readonly HttpClient _httpClient;
     private readonly ILogger<CatalogService> _logger;
 
     private readonly string _remoteServiceBaseUrl;
 
-    public CatalogService(HttpClient httpClient, ILogger<CatalogService> logger, IOptions<AppSettings> settings)
+    public CatalogService(HttpClient httpClient, ILogger<CatalogService> logger, IOptionsSnapshot<AppSettings> settings)
     {
         _httpClient = httpClient;
         _settings = settings;
         _logger = logger;
 
-        _remoteServiceBaseUrl = $"{_settings.Value.PurchaseUrl}/c/api/v1/catalog/";
+        _remoteServiceBaseUrl = $"{_settings.Value.CatalogUrl}/c/api/v1/catalog/";
     }
 
     public async Task<Catalog> GetCatalogItems(int page, int take, int? brand, int? type)
@@ -40,7 +40,7 @@ public class CatalogService : ICatalogService
         var items = new List<SelectListItem>();
 
         items.Add(new SelectListItem() { Value = null, Text = "All", Selected = true });
-            
+
         using var brands = JsonDocument.Parse(responseString);
 
         foreach (JsonElement brand  in brands.RootElement.EnumerateArray())
@@ -63,7 +63,7 @@ public class CatalogService : ICatalogService
 
         var items = new List<SelectListItem>();
         items.Add(new SelectListItem() { Value = null, Text = "All", Selected = true });
-            
+
         using var catalogTypes = JsonDocument.Parse(responseString);
 
         foreach (JsonElement catalogType in catalogTypes.RootElement.EnumerateArray())

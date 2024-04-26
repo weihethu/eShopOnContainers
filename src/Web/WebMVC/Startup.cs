@@ -129,18 +129,20 @@ static class ServiceCollectionExtensions
         services.AddHttpClient("extendedhandlerlifetime").SetHandlerLifetime(TimeSpan.FromMinutes(5)).AddDevspacesSupport();
 
         //add http client services
-        services.AddHttpClient<IBasketService, BasketService>()
-                .SetHandlerLifetime(TimeSpan.FromMinutes(5))  //Sample. Default lifetime is 2 minutes
-                .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>()
-                .AddDevspacesSupport();
-
         services.AddHttpClient<ICatalogService, CatalogService>()
-                .AddDevspacesSupport();
+            .ConfigureHttpClient(client => client.BaseAddress = new Uri(configuration["CatalogUrl"]))
+            .AddDevspacesSupport();
+
+        services.AddHttpClient<IBasketService, BasketService>()
+            .ConfigureHttpClient(client => client.BaseAddress = new Uri(configuration["BasketUrl"]))
+            .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>()
+            .AddDevspacesSupport();
 
         services.AddHttpClient<IOrderingService, OrderingService>()
-                .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>()
-                .AddHttpMessageHandler<HttpClientRequestIdDelegatingHandler>()
-                .AddDevspacesSupport();
+            .ConfigureHttpClient(client => client.BaseAddress = new Uri(configuration["OrderingUrl"]))
+            .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>()
+            .AddHttpMessageHandler<HttpClientRequestIdDelegatingHandler>()
+            .AddDevspacesSupport();
 
 
         //add custom application services
@@ -156,7 +158,7 @@ static class ServiceCollectionExtensions
         var callBackUrl = configuration.GetValue<string>("CallBackUrl");
         var sessionCookieLifetime = configuration.GetValue("SessionCookieLifetimeMinutes", 60);
 
-        // Add Authentication services          
+        // Add Authentication services
 
         services.AddAuthentication(options =>
         {
